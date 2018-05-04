@@ -4,6 +4,8 @@ import {increaseTimeTo, duration} from './helpers/increaseTime'
 import latestTime from './helpers/latestTime'
 import EVMRevert from './helpers/EVMRevert'
 import EVMThrow from './helpers/EVMThrow'
+import expectThrow from './helpers/expectThrow'; 
+import assertRevert from './helpers/assertRevert';
 
 // web3Abi required to test overloaded transfer functions
 const web3Abi = require('web3-eth-abi');
@@ -51,7 +53,7 @@ contract('Token', function ([_, wallet]) {
 
   })
 
-  /**describe('Construction', function () { 
+  describe('Construction', function () { 
 
     it('should make sender maintainer and have entire token balance', async function () {
 
@@ -63,15 +65,14 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-  })**/
+  })
 
 
 /* ***************************** transfer ********************************* */
 
 
-  /**describe('Transfers', function () {
+  describe('transfer', function () {
 
-		// Make sure transfer succeeds
     it('should send 1000 tokens from owner to accountTwo', async function () {
 
 			// We're gonna make a transfer first to ensure no HackerGold-esque bug occurrs
@@ -85,7 +86,6 @@ contract('Token', function ([_, wallet]) {
   
     })
 
-		// Make sure transfer succeeds when sending full balance
     it('should send full balance from owner', async function () {
 
       await this.token.transfer(this.accountTwo, toEther(107142857), {from: this.owner})
@@ -98,22 +98,20 @@ contract('Token', function ([_, wallet]) {
   
     })
 
-		// Make sure transfer fails when needed
     it('should fail when address sends more tokens than it has', async function () {
 
       await this.token.transfer(this.owner, toEther(10000), {from: this.accountTwo}).should.be.rejectedWith(EVMRevert);
 
     })
 
-  })**/
+  })
   
   
 /* ************************** approve and transferFrom *********************** */
 
 
-  /**describe('Approves', function () {
+  describe('approve/increaseApproval/decreaseApproval', function () {
 
-		// Make sure approve succeeds
     it('should approve 500 tokens to be sent by accountTwo', async function() {
     
       await this.token.approve(this.accountTwo, toEther(500), {from: this.owner})
@@ -123,8 +121,7 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-		// Make sure approve succeeds
-    it('should increaseApproval 500 tokens to be sent by accountTwo', async function() {
+    it('should increaseApproval by 500 tokens to be sent by accountTwo', async function() {
     
       await this.token.increaseApproval(this.accountTwo, toEther(500), {from: this.owner})
 
@@ -133,8 +130,7 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-    // Make sure approve succeeds
-    it('should decreaseApproval 500 tokens to be sent by accountTwo', async function() {
+    it('should decreaseApproval by 500 tokens to be sent by accountTwo', async function() {
   
       await this.token.approve(this.accountTwo, toEther(1000), {from: this.owner})
 
@@ -145,8 +141,7 @@ contract('Token', function ([_, wallet]) {
 
     })
     
-    // Make sure approve succeeds
-    it('decreaseApproval should go to 0 if more than approve amount', async function() {
+    it('should decreaseApproval to 0 if more than approve amount', async function() {
   
       await this.token.approve(this.accountTwo, toEther(500), {from: this.owner})
 
@@ -157,15 +152,14 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-  })**/
+  })
 
 
 /* ******************************** transferFrom ******************************** */
 
 
-  /**describe('transferFrom', function () {
+  describe('transferFrom', function () {
 
-		// Make sure transferFrom succeeds and balances are changed correctly
     it('should transfer 500 tokens on behalf of owner to accountFour', async function() {
 
       await this.token.approve(this.accountTwo, toEther(500), {from: this.owner})
@@ -184,7 +178,6 @@ contract('Token', function ([_, wallet]) {
     })
 
 
-		// Make sure transferFrom succeeds and balances are changed correctly when sending full balance
     it('should transferFrom full balance to accountTwo', async function() {
 
       await this.token.approve(this.accountTwo, toEther(107142857), {from: this.owner})
@@ -202,14 +195,12 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-  		// Make sure transferFrom fails without allowance
     it('should fail to transferFrom tokens its not allowed to', async function() {
     
       await this.token.transferFrom(this.owner, this.accountThree, toEther(5000), {from: this.accountTwo}).should.be.rejectedWith(EVMRevert);
 
 		})
 
-		// Make sure transferFrom fails when trying to transfer more than balance: accountFour should have 500 tokens
 		it('should fail when sending more than "from" balance', async function() {
 
 			await this.token.approve(this.accountTwo, toEther(107142857), {from: this.owner})
@@ -220,13 +211,13 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-  })**/
+  })
 
 
 /* ****************************** approveAndCall ********************************** */
 
 
-  /**describe('approveAndCall', function () {
+  describe('approveAndCall', function () {
 
 		it('should give 500 allowance and immediately transferFrom', async function() {
 
@@ -265,13 +256,13 @@ contract('Token', function ([_, wallet]) {
 
 		})
 
-  })**/
+  })
 
 
 /*********************************** ERC865 ************************************ */
 
 
-  /**describe('ERC865 Hashing', function () { 
+  describe('ERC865 Hashing', function () { 
 
 		it('should return the correct transferPreSignedHash, ecrecover should return owner', async function() {
 
@@ -286,7 +277,7 @@ contract('Token', function ([_, wallet]) {
 
 		it('should return the correct approvePreSignedHash, ecrecover should return owner', async function() {
 
-      // Normal transfer function sig, to address, value, extra data, gas price, nonce
+      // Normal approve function sig, to address, value, extra data, gas price, nonce
       let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
@@ -297,7 +288,7 @@ contract('Token', function ([_, wallet]) {
 
 		it('should return the correct increaseApprovalPreSigned, ecrecover should return owner', async function() {
 
-      // Normal transfer function sig, to address, value, extra data, gas price, nonce
+      // Normal increaseApproval function sig, to address, value, extra data, gas price, nonce
       let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
       
@@ -308,7 +299,7 @@ contract('Token', function ([_, wallet]) {
 
 		it('should return the correct decreaseApprovalPreSignedHash, ecrecover should return owner', async function() {
 
-      // Normal transfer function sig, to address, value, extra data, gas price, nonce
+      // Normal decreaseApproval function sig, to address, value, extra data, gas price, nonce
       let preSignedHash = await this.token.getPreSignedHash('0x66188463', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
       
@@ -319,7 +310,7 @@ contract('Token', function ([_, wallet]) {
 
     it('should return the correct approveAndCallPreSignedHash, ecrecover should return owner', async function() {
 
-      // Normal transfer function sig, to address, value, extra data, gas price, nonce
+      // Normal approveAndCall function sig, to address, value, extra data, gas price, nonce
       let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
       
@@ -328,7 +319,7 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-  })**/
+  })
 
 
 /* ***************************** transferPreSigned **************************** */
@@ -345,8 +336,6 @@ contract('Token', function ([_, wallet]) {
       // Send from owner to accountTwo with accountThree as delegate
       // signature, to address, value, gas price, nonce
       let tx = await this.token.transferPreSigned(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree})
-      let txHash = tx.tx
-      console.log("tx",web3.eth.getTransaction(txHash))
 
       let ownerBalance = await this.token.balanceOf(this.owner)
       let twoBalance = await this.token.balanceOf(this.accountTwo)
@@ -412,7 +401,7 @@ contract('Token', function ([_, wallet]) {
 
     it('should fail with data', async function() {
 
-      // Normal increaseApproval function sig, to address, value, extra data of '1', gas price, nonce
+      // Normal transfer function sig, to address, value, extra data of '1', gas price, nonce
       let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.owner, 1, 1, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
@@ -425,7 +414,7 @@ contract('Token', function ([_, wallet]) {
 /* ******************************* approvePreSigned *************************** */
 
 
-  /**describe('ERC865 approvePreSigned', function() {
+  describe('ERC865 approvePreSigned', function() {
 
     it('should approve two and give gas to three', async function() {
 
@@ -498,14 +487,14 @@ contract('Token', function ([_, wallet]) {
       await this.token.approvePreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
     })
 
-  })**/
+  })
 
 
 
 /* ****************************** increaseApprovalPreSigned ************************* */
 
 
-  /**describe('ERC865 increaseApprovalPresigned', function() {
+  describe('ERC865 increaseApprovalPresigned', function() {
 
     it('should approve two and give gas to three', async function() {
 
@@ -577,20 +566,20 @@ contract('Token', function ([_, wallet]) {
       await this.token.increaseApprovalPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
     })
 
-  })**/
+  })
 
 
 /* ************************** decreaseApprovalPreSigned **************************** */
 
 
-  /**describe('ERC865 decreaseApprovalPresigned', function() {
+  describe('ERC865 decreaseApprovalPresigned', function() {
 
     it('should approve two and give gas to three', async function() {
 
       // Approve first so we can decrease
       await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
 
-      // Normal approve function sig, to address, value, extra data, gas price, nonce of 2 (although it shouldn't matter)
+      // Normal decreaseApproval function sig, to address, value, extra data, gas price, nonce of 2 (although it shouldn't matter)
       let preSignedHash = await this.token.getPreSignedHash('0x66188463', this.accountTwo, toEther(100), 0, 1, 2)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
@@ -688,13 +677,13 @@ contract('Token', function ([_, wallet]) {
 
      })
 
-  })**/
+  })
 
 
 /* ************************* approveAndCallPreSigned ************************* */
 
 
-  /** describe('ERC865 approveAndCallPresigned', function() {
+  describe('ERC865 approveAndCallPresigned', function() {
 
     it('should approve two and give gas to three', async function() {
 
@@ -729,7 +718,7 @@ contract('Token', function ([_, wallet]) {
 
     it('should succeed with 0 gas', async function() {
 
-      // Normal increaseApproval function sig, to address, value, extra data, ZERO gas price, nonce
+      // Normal approveAndCall function sig, to address, value, extra data, ZERO gas price, nonce
       let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 0, 0, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
@@ -768,7 +757,7 @@ contract('Token', function ([_, wallet]) {
 
     it('should succeed with data', async function() {
 
-      // Normal increaseApproval function sig, to address, value, extra data of '1', gas price, nonce
+      // Normal approveAndCall function sig, to address, value, extra data of '1', gas price, nonce
       let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 1, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
@@ -779,7 +768,7 @@ contract('Token', function ([_, wallet]) {
 
     it('should fail on call to wallet address', async function() {
 
-      // Normal increaseApproval function sig, to address, value, extra data of '1', gas price, nonce
+      // Normal approveAndCall function sig, to address, value, extra data of '1', gas price, nonce
       let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
@@ -787,12 +776,12 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-  })**/
+  })
 
 /* *************************** revokeSignature ******************************* */
 
 
-  /**describe('revokeSignature', function () {
+  describe('revokeSignature', function () {
 
     it('should make invalid signature and fail on attempt to send', async function() {
 
@@ -871,33 +860,56 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-  })**/
+  })
 
 
 /******************************** Fallback *************************************/
 
 
-  describe('Fallback future-proofing', function () {
+  describe('Fallback', function () {
 
     it('should redirect to our preSigned function from arbitrary sig', async function () {
 
-      await this.token.updateStandard('deadbeef', '0x1296830d', {from:this.owner})
+      // arbitrary function sig => transferPreSigned sig
+      await this.token.updateStandard('0xdeadbeef', '0x1296830d', {from:this.owner})
 
-      // Normal transfer function sig, to address, value, extra data, ZERO gas price, nonce
       let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, toEther(100), 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
-      let rawInput = "0x1296830d00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000f17f52151ebef6c7334fad080c5704d77216b7320000000000000000000000000000000000000000000000056bc75e2d6310000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004114b07a15d658defd8a68fdd00a3248fabfa702211c19b43af95fb147a8e4a4554b8c6f661fa13599452fce839232626e5726ed26bcc3aef6ba1a68deab1ff47b0000000000000000000000000000000000000000000000000000000000000000"
-      web3.eth.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawInput})
-      //await this.token.signedTransfer(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree})
-      
-      let ownerBalance = this.token.balanceOf(this.owner)
-      let twoBalance = this.token.balanceOf(this.accountTwo)
-      let threeBalance = this.token.balanceOf(this.accountThree)
+      let typesArray = ['bytes', 'address', 'uint256', 'uint256', 'uint256']
+      let parameters = [signature, this.accountTwo, toEther(100), 1, 1]
+      let preRaw = web3Abi.encodeParameters(typesArray, parameters);
+      let rawData = '0xdeadbeef' + preRaw.substring(2)
 
-      //ownerBalance.should.be.bignumber.lessThan(toEther(107142857))
-      //twoBalance.should.be.bignumber.equal(toEther(100))
-      //threeBalance.should.be.bignumber.greaterThan(0)
+      // transferPreSigned input. From is owner, to this.accountTwo, 
+      let tx = web3.eth.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawData})
+      assert.isOk(tx)
+
+      let ownerBalance = await this.token.balanceOf(this.owner)
+      let twoBalance = await this.token.balanceOf(this.accountTwo)
+      let threeBalance = await this.token.balanceOf(this.accountThree)
+
+      ownerBalance.should.be.bignumber.lessThan(toEther(107142857))
+      twoBalance.should.be.bignumber.equal(toEther(100))
+      threeBalance.should.be.bignumber.greaterThan(0)
+
+    })
+
+    it('should fail on unrecognized sig', async function () {
+
+      // arbitrary function sig => transferPreSigned sig
+      await this.token.updateStandard('0xdeadbeef', '0x1296830d', {from:this.owner})
+
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, toEther(100), 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+
+      let typesArray = ['bytes', 'address', 'uint256', 'uint256', 'uint256']
+      let parameters = [signature, this.accountTwo, toEther(100), 1, 1]
+      let preRaw = web3Abi.encodeParameters(typesArray, parameters);
+      let rawData = '0xdeadbead' + preRaw.substring(2)
+
+      // transferPreSigned input. From is owner, to this.accountTwo, 
+      expectThrow(this.token.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawData}))
 
     })
 
@@ -907,38 +919,38 @@ contract('Token', function ([_, wallet]) {
 /******************************** Constants ************************************/
 
 
-/**describe('Constants', function () {
+  describe('Constants', function () {
 
-  it('should return the correct total supply of tokens', async function() {
+    it('should return the correct total supply of tokens', async function() {
 
-    let tokenSupply = await this.token.totalSupply()
-    tokenSupply.should.be.bignumber.equal(toEther(107142857))
+      let tokenSupply = await this.token.totalSupply()
+      tokenSupply.should.be.bignumber.equal(toEther(107142857))
 
-  })
+    })
 
-  it('should return the correct balance of address', async function() {
-  
-    let balance = await this.token.balanceOf(this.owner)
-    balance.should.be.bignumber.equal(toEther(107142857))
+    it('should return the correct balance of address', async function() {
     
+      let balance = await this.token.balanceOf(this.owner)
+      balance.should.be.bignumber.equal(toEther(107142857))
+      
+    })
+
+    it('should return the correct allowance for address', async function() {
+
+      await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
+
+      let allowance = await this.token.allowance(this.owner, this.accountTwo)
+      allowance.should.be.bignumber.equal(toEther(500))
+
+    })
+
   })
-
-  it('should return the correct allowance for address', async function() {
-
-    await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
-
-    let allowance = await this.token.allowance(this.owner, this.accountTwo)
-    allowance.should.be.bignumber.equal(toEther(500))
-
-  })
-
-})**/
 
 
 /******************************* Maintainer *************************************/
 
 
-  /**describe('updateStandard', function () { 
+  describe('updateStandard', function () { 
 
     it('should declare standards correctly', async function () {
 
@@ -983,7 +995,7 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-  })**/
+  })
 
 /* **************************************************************************** */
 
