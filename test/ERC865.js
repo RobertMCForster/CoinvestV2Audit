@@ -53,7 +53,7 @@ contract('Token', function ([_, wallet]) {
 
   /**describe('Construction', function () { 
 
-    it('0x4e7 should be maintainer and have entire token balance', async function () {
+    it('should make sender maintainer and have entire token balance', async function () {
 
       let address = await this.token.owner()
       address.should.be.equal(this.owner)
@@ -111,7 +111,7 @@ contract('Token', function ([_, wallet]) {
 /* ************************** approve and transferFrom *********************** */
 
 
-  describe('Approves', function () {
+  /**describe('Approves', function () {
 
 		// Make sure approve succeeds
     it('should approve 500 tokens to be sent by accountTwo', async function() {
@@ -123,13 +123,6 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-		// Make sure approve fails when needed
-    it('should fail to approve tokens it doesnt have', async function() {
-    
-      await this.token.approve(this.accountThree, toEther(5000), {from: this.accountTwo}).should.be.rejectedWith(EVMRevert);
-
-    })
-
 		// Make sure approve succeeds
     it('should increaseApproval 500 tokens to be sent by accountTwo', async function() {
     
@@ -137,13 +130,6 @@ contract('Token', function ([_, wallet]) {
 
       let allowance = await this.token.allowance(this.owner, this.accountTwo)
       allowance.should.be.bignumber.equal(toEther(500))
-
-    })
-
-		// Make sure approve succeeds
-    it('should fail on increaseApproval it doesn\'t have', async function() {
-    
-      await this.token.increaseApproval(this.owner, toEther(500), {from: this.accountTwo}).should.be.rejectedWith(EVMRevert);
 
     })
 
@@ -171,7 +157,7 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-  })
+  })**/
 
 
 /* ******************************** transferFrom ******************************** */
@@ -287,15 +273,59 @@ contract('Token', function ([_, wallet]) {
 
   /**describe('ERC865 Hashing', function () { 
 
-		it('should return the correct hash, ecrecover should return owner', async function() {
+		it('should return the correct transferPreSignedHash, ecrecover should return owner', async function() {
 
       // Normal transfer function sig, to address, value, extra data, gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xa9059cbb, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+      
+      let address = await this.token.recoverPreSigned(signature, '0xa9059cbb', this.accountTwo, 1, 0, 1, 1)
+      address.should.be.equal(this.owner)
+
+    })
+
+		it('should return the correct approvePreSignedHash, ecrecover should return owner', async function() {
+
+      // Normal transfer function sig, to address, value, extra data, gas price, nonce
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
-      let address = await this.token.recoverPreSigned(signature, 0xa9059cbb, this.accountTwo, 1, 0, 1, 1)
+      let address = await this.token.recoverPreSigned(signature, '0x095ea7b3', this.accountTwo, 1, 0, 1, 1)
+      address.should.be.equal(this.owner)
+
+    })
+
+		it('should return the correct increaseApprovalPreSigned, ecrecover should return owner', async function() {
+
+      // Normal transfer function sig, to address, value, extra data, gas price, nonce
+      let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.accountTwo, 1, 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+      
+      let address = await this.token.recoverPreSigned(signature, '0xd73dd623', this.accountTwo, 1, 0, 1, 1)
       address.should.be.equal(this.owner)
     
+    })
+
+		it('should return the correct decreaseApprovalPreSignedHash, ecrecover should return owner', async function() {
+
+      // Normal transfer function sig, to address, value, extra data, gas price, nonce
+      let preSignedHash = await this.token.getPreSignedHash('0x66188463', this.accountTwo, 1, 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+      
+      let address = await this.token.recoverPreSigned(signature, '0x66188463', this.accountTwo, 1, 0, 1, 1)
+      address.should.be.equal(this.owner)
+
+    })
+
+    it('should return the correct approveAndCallPreSignedHash, ecrecover should return owner', async function() {
+
+      // Normal transfer function sig, to address, value, extra data, gas price, nonce
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.accountTwo, 1, 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+      
+      let address = await this.token.recoverPreSigned(signature, '0xcae9ca51', this.accountTwo, 1, 0, 1, 1)
+      address.should.be.equal(this.owner)
+
     })
 
   })**/
@@ -306,27 +336,32 @@ contract('Token', function ([_, wallet]) {
 
   describe('ERC865 transferPreSigned', function() {
 
-    it('should give value to two and gas to three', async function() {
+    it('should send 100 tokens from one to two, and gas to three', async function() {
 
       // Normal transfer function sig, to address, value, extra data, gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xa9059cbb, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, toEther(100), 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       // Send from owner to accountTwo with accountThree as delegate
       // signature, to address, value, gas price, nonce
-      await this.token.transferPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree})
+      let tx = await this.token.transferPreSigned(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree})
+      let txHash = tx.tx
+      console.log("tx",web3.eth.getTransaction(txHash))
 
+      let ownerBalance = await this.token.balanceOf(this.owner)
       let twoBalance = await this.token.balanceOf(this.accountTwo)
       let threeBalance = await this.token.balanceOf(this.accountThree)
       
-      twoBalance.should.be.bignumber.equal(1)
-      //threeBalance.should.be.bignumber.equal(110432)
+      // Make sure owner sent gas
+      ownerBalance.should.be.bignumber.lessThan(toEther(107142757))
+      twoBalance.should.be.bignumber.equal(toEther(100))
+      threeBalance.should.be.bignumber.greaterThan(0)
 
     })
 
     it('should increment nonce', async function() {
 
-      let preSignedHash = await this.token.getPreSignedHash(0xa9059cbb, this.accountTwo, 1, 0, 0, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 0, 0, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.transferPreSigned(signature, this.accountTwo, 1, 0, 1, {from:this.accountThree})
@@ -339,7 +374,7 @@ contract('Token', function ([_, wallet]) {
     it('should succeed with 0 gas', async function() {
 
       // Normal transfer function sig, to address, value, extra data, ZERO gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xa9059cbb, this.accountTwo, 1, 0, 0, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 0, 0, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       let tx = await this.token.transferPreSigned(signature, this.accountTwo, 1, 0, 1, {from:this.accountThree})
@@ -350,7 +385,7 @@ contract('Token', function ([_, wallet]) {
     it('should fail on too many tokens', async function() {
 
       // Signing with account two (0 tokens)
-      let preSignedHash = await this.token.getPreSignedHash(0xa9059cbb, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.accountTwo, preSignedHash);
 
       await this.token.transferPreSigned(signature, this.owner, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -358,7 +393,7 @@ contract('Token', function ([_, wallet]) {
 
     it('should fail on repeat sig', async function() {
 
-      let preSignedHash = await this.token.getPreSignedHash(0xa9059cbb, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.transferPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree})
@@ -369,7 +404,7 @@ contract('Token', function ([_, wallet]) {
     it('should fail on wrong function sig', async function() {
 
       // Normal approve function sig in here
-      let preSignedHash = await this.token.getPreSignedHash(0x095ea7b3, this.owner, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.owner, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.transferPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -378,7 +413,7 @@ contract('Token', function ([_, wallet]) {
     it('should fail with data', async function() {
 
       // Normal increaseApproval function sig, to address, value, extra data of '1', gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xa9059cbb, this.owner, 1, 1, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.owner, 1, 1, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.transferPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -390,32 +425,32 @@ contract('Token', function ([_, wallet]) {
 /* ******************************* approvePreSigned *************************** */
 
 
-  describe('ERC865 approvePreSigned', function() {
+  /**describe('ERC865 approvePreSigned', function() {
 
     it('should approve two and give gas to three', async function() {
 
       // Normal approve function sig, to address, value, extra data, gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0x095ea7b3, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.accountTwo, toEther(100), 0, 1, 1)
+
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
-      let balance = await this.token.balanceOf(this.owner)
-
       // signature, to, value, gas price, nonce
-      await this.token.approvePreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree})
+      await this.token.approvePreSigned(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree})
 
       let allowance = await this.token.allowance(this.owner, this.accountTwo)
+      let ownerBalance = await this.token.balanceOf(this.owner)
       let threeBalance = await this.token.balanceOf(this.accountThree)
 
-      allowance.should.be.bignumber.equal(1)
-      //threeBalance.should.be.bignumber.equal(110432)
+      allowance.should.be.bignumber.equal(toEther(100))
+      ownerBalance.should.be.bignumber.lessThan(toEther(107142857))
+      threeBalance.should.be.bignumber.greaterThan(0)
 
     })
 
     it('should increment nonce', async function() {
 
-      let preSignedHash = await this.token.getPreSignedHash(0x095ea7b3, this.accountTwo, 1, 1, 0, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
-      console.log
 
       await this.token.approvePreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree})
       
@@ -427,7 +462,7 @@ contract('Token', function ([_, wallet]) {
     it('should succeed with 0 gas', async function() {
 
       // Normal approve function sig, to address, value, extra data, ZERO gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0x095ea7b3, this.accountTwo, 1, 0, 0, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.accountTwo, 1, 0, 0, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       let tx = await this.token.approvePreSigned(signature, this.accountTwo, 1, 0, 1, {from:this.accountThree})
@@ -435,18 +470,9 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-    it('should fail on too many tokens', async function() {
-
-      // Sending from account two
-      let preSignedHash = await this.token.getPreSignedHash(0x095ea7b3, this.accountTwo, 1, 0, 1, 1)
-      let signature = web3.eth.sign(this.accountTwo, preSignedHash);
-
-      await this.token.approvePreSigned(signature, this.owner, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
-    })
-
     it('should fail on repeat sig', async function() {
 
-      let preSignedHash = await this.token.getPreSignedHash(0x095ea7b3, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.approvePreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree});
@@ -457,7 +483,7 @@ contract('Token', function ([_, wallet]) {
     it('should fail on wrong function sig', async function() {
 
       // transfer function sig here
-      let preSignedHash = await this.token.getPreSignedHash(0xa9059cbb, this.owner, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.owner, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.approvePreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -466,13 +492,13 @@ contract('Token', function ([_, wallet]) {
     it('should fail with data', async function() {
 
       // Normal approve function sig, to address, value, extra data of '1', gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0x095ea7b3, this.owner, 1, 1, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.owner, 1, 1, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.approvePreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
     })
 
-  })
+  })**/
 
 
 
@@ -484,26 +510,27 @@ contract('Token', function ([_, wallet]) {
     it('should approve two and give gas to three', async function() {
 
       // Normal increaseApproval function sig, to address, value, extra data, gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xd73dd623, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.accountTwo, toEther(100), 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       // signature, to, value, gas price, nonce
-      await this.token.increaseApprovalPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree})
+      await this.token.increaseApprovalPreSigned(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree})
 
       let allowance = await this.token.allowance(this.owner, this.accountTwo)
+      let ownerBalance = await this.token.balanceOf(this.owner)
       let threeBalance = await this.token.balanceOf(this.accountThree)
-      //console.log(threeBalance)
 
-      allowance.should.be.bignumber.equal(1)
-      //threeBalance.should.be.bignumber.equal(110432)
+      allowance.should.be.bignumber.equal(toEther(100))
+      ownerBalance.should.be.bignumber.lessThan(toEther(107142857))
+      threeBalance.should.be.bignumber.greaterThan(0)
 
     })
 
     it('should increment nonce', async function() {
 
-      let preSignedHash = await this.token.getPreSignedHash(0xd73dd623, this.accountTwo, 1, 1, 0, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
-      
+
       await this.token.increaseApprovalPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree})
       
       let nonce = await this.token.getNonce(this.owner)
@@ -514,7 +541,7 @@ contract('Token', function ([_, wallet]) {
     it('should succeed with 0 gas', async function() {
 
       // Normal increaseApproval function sig, to address, value, extra data, ZERO gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xd73dd623, this.accountTwo, 1, 0, 0, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.accountTwo, 1, 0, 0, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       let tx = await this.token.increaseApprovalPreSigned(signature, this.accountTwo, 1, 0, 1, {from:this.accountThree})
@@ -522,18 +549,9 @@ contract('Token', function ([_, wallet]) {
 
     })
 
-    it('should fail on too many tokens', async function() {
-
-      // Signing with account two
-      let preSignedHash = await this.token.getPreSignedHash(0xd73dd623, this.owner, 1, 0, 1, 1)
-      let signature = web3.eth.sign(this.accountTwo, preSignedHash);
-
-      await this.token.increaseApprovalPreSigned(signature, this.owner, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
-    })
-
     it('should fail on repeat sig', async function() {
 
-      let preSignedHash = await this.token.getPreSignedHash(0xd73dd623, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.increaseApprovalPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree})
@@ -544,7 +562,7 @@ contract('Token', function ([_, wallet]) {
     it('should fail on wrong function sig', async function() {
 
       // Sending with approve function sig
-      let preSignedHash = await this.token.getPreSignedHash(0x095ea7b3, this.owner, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.owner, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.increaseApprovalPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -553,7 +571,7 @@ contract('Token', function ([_, wallet]) {
     it('should fail with data', async function() {
 
       // Normal increaseApproval function sig, to address, value, extra data of '1', gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xd73dd623, this.owner, 1, 1, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.owner, 1, 1, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.increaseApprovalPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -573,16 +591,18 @@ contract('Token', function ([_, wallet]) {
       await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
 
       // Normal approve function sig, to address, value, extra data, gas price, nonce of 2 (although it shouldn't matter)
-      let preSignedHash = await this.token.getPreSignedHash(0x66188463, this.accountTwo, toEther(100), 0, 1, 2)
+      let preSignedHash = await this.token.getPreSignedHash('0x66188463', this.accountTwo, toEther(100), 0, 1, 2)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.decreaseApprovalPreSigned(signature, this.accountTwo, toEther(100), 1, 2, {from:this.accountThree})
 
       let allowance = await this.token.allowance(this.owner, this.accountTwo)
+      let ownerBalance = await this.token.balanceOf(this.owner)
       let threeBalance = await this.token.balanceOf(this.accountThree)
 
       allowance.should.be.bignumber.equal(toEther(400))
-      //threeBalance.should.be.bignumber.equal(110432)
+      ownerBalance.should.be.bignumber.lessThan(toEther(107142857))
+      threeBalance.should.be.bignumber.greaterThan(0)
 
     })
 
@@ -592,7 +612,7 @@ contract('Token', function ([_, wallet]) {
       // Approve first so we can decrease
       await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
 
-      let preSignedHash = await this.token.getPreSignedHash(0x66188463, this.accountTwo, toEther(100), 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x66188463', this.accountTwo, toEther(100), 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.decreaseApprovalPreSigned(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree})
@@ -608,7 +628,7 @@ contract('Token', function ([_, wallet]) {
       await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
 
       // Normal decreaseApproval function sig, to address, value, extra data, ZERO gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0x66188463, this.accountTwo, toEther(100), 0, 0, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x66188463', this.accountTwo, toEther(100), 0, 0, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       let tx = await this.token.decreaseApprovalPreSigned(signature, this.accountTwo, toEther(100), 0, 1, {from:this.accountThree})
@@ -622,7 +642,7 @@ contract('Token', function ([_, wallet]) {
       await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
 
       // Only 500 approved, decreasing by 600
-      let preSignedHash = await this.token.getPreSignedHash(0x66188463, this.accountTwo, toEther(600), 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x66188463', this.accountTwo, toEther(600), 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.decreaseApprovalPreSigned(signature, this.accountTwo, toEther(600), 1, 1, {from:this.accountThree})
@@ -636,7 +656,7 @@ contract('Token', function ([_, wallet]) {
 
       await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
 
-      let preSignedHash = await this.token.getPreSignedHash(0x66188463, this.accountTwo, toEther(100), 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x66188463', this.accountTwo, toEther(100), 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.decreaseApprovalPreSigned(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree})
@@ -649,7 +669,7 @@ contract('Token', function ([_, wallet]) {
       await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
 
       // increaseApproval function sig here
-      let preSignedHash = await this.token.getPreSignedHash(0xd73dd623, this.accountTwo, toEther(100), 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.accountTwo, toEther(100), 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.decreaseApprovalPreSigned(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -661,7 +681,7 @@ contract('Token', function ([_, wallet]) {
       await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
 
       // Normal decreaseApproval function sig, to address, value, extra data of '1', gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xd73dd623, this.accountTwo, toEther(100), 1, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.accountTwo, toEther(100), 1, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.decreaseApprovalPreSigned(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -674,29 +694,30 @@ contract('Token', function ([_, wallet]) {
 /* ************************* approveAndCallPreSigned ************************* */
 
 
-  describe('ERC865 approveAndCallPresigned', function() {
+  /** describe('ERC865 approveAndCallPresigned', function() {
 
     it('should approve two and give gas to three', async function() {
 
-      // Normal increaseApproval function sig, to address, value, extra data, gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xcae9ca51, this.testContract.address, 1, 0, 1, 1)
+      // Normal approveAndCall function sig, to address, value, extra data, gas price, nonce
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, toEther(100), 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       // signature, to, value, gas price, nonce
-      await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 0, 1, 1, {from:this.accountThree})
+      await this.token.approveAndCallPreSigned(signature, this.testContract.address, toEther(100), 0, 1, 1, {from:this.accountThree})
 
       let testBalance = await this.token.balanceOf(this.testContract.address)
+      let ownerBalance = await this.token.balanceOf(this.owner)
       let threeBalance = await this.token.balanceOf(this.accountThree)
-      //console.log(threeBalance)
 
-      testBalance.should.be.bignumber.equal(1)
-      //threeBalance.should.be.bignumber.equal(110432)
+      testBalance.should.be.bignumber.equal(toEther(100))
+      ownerBalance.should.be.bignumber.lessThan(toEther(107142857))
+      threeBalance.should.be.bignumber.greaterThan(0)
 
     })
 
     it('should increment nonce', async function() {
 
-      let preSignedHash = await this.token.getPreSignedHash(0xcae9ca51, this.testContract.address, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
       
       await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 0, 1, 1, {from:this.accountThree})
@@ -709,7 +730,7 @@ contract('Token', function ([_, wallet]) {
     it('should succeed with 0 gas', async function() {
 
       // Normal increaseApproval function sig, to address, value, extra data, ZERO gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xcae9ca51, this.testContract.address, 1, 0, 0, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 0, 0, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       let tx = await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 0, 0, 1, {from:this.accountThree})
@@ -720,7 +741,7 @@ contract('Token', function ([_, wallet]) {
     it('should fail on too many tokens', async function() {
 
       // Signing with account two
-      let preSignedHash = await this.token.getPreSignedHash(0xcae9ca51, this.testContract.address, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.accountTwo, preSignedHash);
 
       await this.token.approveAndCallPreSigned(signature, this.owner, 1, 0, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -728,7 +749,7 @@ contract('Token', function ([_, wallet]) {
 
     it('should fail on repeat sig', async function() {
 
-      let preSignedHash = await this.token.getPreSignedHash(0xcae9ca51, this.testContract.address, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 0, 1, 1, {from:this.accountThree})
@@ -739,7 +760,7 @@ contract('Token', function ([_, wallet]) {
     it('should fail on wrong function sig', async function() {
 
       // Sending with approve function sig
-      let preSignedHash = await this.token.getPreSignedHash(0x095ea7b3, this.testContract.address, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.testContract.address, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 0, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
@@ -748,7 +769,7 @@ contract('Token', function ([_, wallet]) {
     it('should succeed with data', async function() {
 
       // Normal increaseApproval function sig, to address, value, extra data of '1', gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xcae9ca51, this.testContract.address, 1, 1, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 1, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       let tx = await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 1, 1, 1, {from:this.accountThree})
@@ -759,14 +780,14 @@ contract('Token', function ([_, wallet]) {
     it('should fail on call to wallet address', async function() {
 
       // Normal increaseApproval function sig, to address, value, extra data of '1', gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash(0xcae9ca51, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       let tx = await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 0, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
 
     })
 
-  })
+  })**/
 
 /* *************************** revokeSignature ******************************* */
 
@@ -777,7 +798,7 @@ contract('Token', function ([_, wallet]) {
 
       // Arbitrary transfer preSigned
       // 0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301
-      let preSignedHash = await this.token.getPreSignedHash(0xa9059cbb, this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.revokeSignature(signature)
@@ -793,7 +814,7 @@ contract('Token', function ([_, wallet]) {
     it('should revoke signature and send gas to delegate', async function() {
 
       // Arbitrary transfer preSigned
-      let signature = 0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301
+      let signature = '0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301'
 
       // Signature to revoke, gas price
       let revokeHash = await this.token.getRevokeHash(signature, 1)
@@ -805,35 +826,16 @@ contract('Token', function ([_, wallet]) {
 
       // Check delegate balance
       let threeBalance = await this.token.balanceOf(this.accountThree)
-      console.log("Three balance:", threeBalance)
 
       // Make sure signature is revoked
       await this.token.transferPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);     
 
     })
 
-    it('should increment nonce', async function() {
-
-      // Arbitrary transfer preSigned
-      let signature = 0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301
-
-      // Signature to revoke, gas price
-      let revokeHash = await this.token.getRevokeHash(signature, 1)
-      let revokeSig = web3.eth.sign(this.owner, revokeHash);
-
-      // Revoke the signature
-      let tx = await this.token.revokeSignaturePreSigned(revokeSig, signature, 1, {from: this.accountThree})
-      assert.isOk(tx)
-
-      let nonce = await this.token.getNonce(this.owner)
-      nonce.should.be.bignumber.equal(1)
-
-    })
-
     it('should succeed with 0 gas', async function() {
 
       // Arbitrary transfer preSigned
-      let signature = 0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301
+      let signature = '0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301'
 
       // Signature to revoke, gas price
       let revokeHash = await this.token.getRevokeHash(signature, 0)
@@ -855,7 +857,7 @@ contract('Token', function ([_, wallet]) {
     it('should fail on repeat sig', async function() {
 
       // Arbitrary transfer preSigned
-      let signature = 0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301
+      let signature = '0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301'
 
       // Signature to revoke, gas price
       let revokeHash = await this.token.getRevokeHash(signature, 0)
@@ -872,26 +874,56 @@ contract('Token', function ([_, wallet]) {
   })**/
 
 
+/******************************** Fallback *************************************/
+
+
+  describe('Fallback future-proofing', function () {
+
+    it('should redirect to our preSigned function from arbitrary sig', async function () {
+
+      await this.token.updateStandard('deadbeef', '0x1296830d', {from:this.owner})
+
+      // Normal transfer function sig, to address, value, extra data, ZERO gas price, nonce
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, toEther(100), 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+
+      let rawInput = "0x1296830d00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000f17f52151ebef6c7334fad080c5704d77216b7320000000000000000000000000000000000000000000000056bc75e2d6310000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004114b07a15d658defd8a68fdd00a3248fabfa702211c19b43af95fb147a8e4a4554b8c6f661fa13599452fce839232626e5726ed26bcc3aef6ba1a68deab1ff47b0000000000000000000000000000000000000000000000000000000000000000"
+      web3.eth.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawInput})
+      //await this.token.signedTransfer(signature, this.accountTwo, toEther(100), 1, 1, {from:this.accountThree})
+      
+      let ownerBalance = this.token.balanceOf(this.owner)
+      let twoBalance = this.token.balanceOf(this.accountTwo)
+      let threeBalance = this.token.balanceOf(this.accountThree)
+
+      //ownerBalance.should.be.bignumber.lessThan(toEther(107142857))
+      //twoBalance.should.be.bignumber.equal(toEther(100))
+      //threeBalance.should.be.bignumber.greaterThan(0)
+
+    })
+
+  })
+
+
 /******************************** Constants ************************************/
 
 
 /**describe('Constants', function () {
 
-  it('totalSupply should return the correct total supply of tokens', async function() {
+  it('should return the correct total supply of tokens', async function() {
 
     let tokenSupply = await this.token.totalSupply()
     tokenSupply.should.be.bignumber.equal(toEther(107142857))
 
   })
 
-  it('balanceOf should return the correct balance of address', async function() {
+  it('should return the correct balance of address', async function() {
   
     let balance = await this.token.balanceOf(this.owner)
     balance.should.be.bignumber.equal(toEther(107142857))
     
   })
 
-  it('allowance should return the correct allowance for address', async function() {
+  it('should return the correct allowance for address', async function() {
 
     await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
 
@@ -910,15 +942,50 @@ contract('Token', function ([_, wallet]) {
 
     it('should declare standards correctly', async function () {
 
-      await this.token.updateStandard("0xdeadbeef", "0xcae9ca51", {from:this.owner})
+      await this.token.updateStandard("0xdeadbeef", "0x1296830d", {from:this.owner})
       let result = await this.token.standardSigs("0xdeadbeef")
-      result.should.be.equal("0xcae9ca51")
+      result.should.be.equal("0x1296830d")
 
     })
 
-    // Add require checks here
+    it('should fail on non-owner call', async function () {
+
+      await this.token.updateStandard("0xdeadbeef", "0x1296830d", {from:this.accountTwo}).should.be.rejectedWith(EVMRevert)
+
+    })
+
+    it('should fail when setting an unacceptable value', async function () {
+
+      await this.token.updateStandard("0xdeadbeef", "0xa9059cbb", {from:this.owner}).should.be.rejectedWith(EVMRevert);
+
+    })
+
+  })
+
+  describe('token_escape', function () {
+
+    it('should be able to transfer any ERC20 off this contract to owner', async function () {
+
+      await this.token.transfer(this.token.address, 1000, {from:this.owner})
+      let tokenBalance = await this.token.balanceOf(this.token.address)
+      tokenBalance.should.be.bignumber.equal(1000)
+
+      await this.token.token_escape(this.token.address, {from:this.owner})
+      let tokenBalanceTwo = await this.token.balanceOf(this.token.address)
+      tokenBalanceTwo.should.be.bignumber.equal(0)
+
+    })
+
+    it('should fail on non-owner call', async function () {
+
+      await this.token.transfer(this.token.address, 1000, {from:this.owner})
+      await this.token.token_escape(this.token.address, {from:this.accountTwo}).should.be.rejectedWith(EVMRevert)
+
+    })
 
   })**/
+
+/* **************************************************************************** */
 
   function toEther(value) {
     return web3.toWei(value, "ether")
