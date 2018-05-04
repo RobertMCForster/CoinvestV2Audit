@@ -474,7 +474,7 @@ contract CoinvestToken is Ownable {
             gas = 35000 + gas.sub(gasleft());
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
-    return true;
+        return true;
     }
     
 /** *************************** Revoke PreSigned ************************** **/
