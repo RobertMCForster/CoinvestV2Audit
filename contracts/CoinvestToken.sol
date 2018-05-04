@@ -247,8 +247,6 @@ contract CoinvestToken is Ownable {
       internal
     returns (bool success)
     {
-        require(balances[_owner] >= _amount);
-        
         allowed[_owner][_spender] = _amount;
         emit Approval(_owner, _spender, _amount);
         return true;
@@ -258,8 +256,6 @@ contract CoinvestToken is Ownable {
       internal
     returns (bool success)
     {
-        require(balances[_owner] >= allowed[_owner][_spender].add(_amount));
-        
         allowed[_owner][_spender] = allowed[_owner][_spender].add(_amount);
         emit Approval(_owner, _spender, allowed[_owner][_spender]);
         return true;
@@ -680,6 +676,9 @@ contract CoinvestToken is Ownable {
       onlyOwner
     returns (bool success)
     {
+        // These 6 
+        require(_ourSig == 0x1296830d || _ourSig == 0x617b390b || _ourSig == 0xadb8249e ||
+            _ourSig == 0x8be52783 || _ourSig == 0xc8d4b389 || _ourSig == 0xe391a7c4);
         standardSigs[_standardSig] = _ourSig;
         return true;
     }
