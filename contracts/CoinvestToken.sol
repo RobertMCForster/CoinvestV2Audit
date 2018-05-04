@@ -77,7 +77,7 @@ contract ApproveAndCallFallBack {
 
 /**
  * @title Coinvest COIN Token
- * @dev ERC20 contract utilizing ERC865-ish structure (primarily 3esmit's iteration).
+ * @dev ERC20 contract utilizing ERC865-ish structure (3esmit's implementation with alterations).
  * @dev to allow users to pay Ethereum fees in tokens.
 **/
 contract CoinvestToken is Ownable {
@@ -185,6 +185,11 @@ contract CoinvestToken is Ownable {
         return true;
     }
     
+    /**
+     * @dev Increases the allowed amount for spender from msg.sender.
+     * @param _spender The address to increase allowed amount for.
+     * @param _amount The amount of tokens to increase allowed amount by.
+    **/
     function increaseApproval(address _spender, uint256 _amount) 
       public
     returns (bool success)
@@ -192,7 +197,12 @@ contract CoinvestToken is Ownable {
         require(_increaseApproval(msg.sender, _spender, _amount));
         return true;
     }
-
+    
+    /**
+     * @dev Decreases the allowed amount for spender from msg.sender.
+     * @param _spender The address to decrease allowed amount for.
+     * @param _amount The amount of tokens to decrease allowed amount by.
+    **/
     function decreaseApproval(address _spender, uint256 _amount) 
       public
     returns (bool success)
@@ -252,6 +262,12 @@ contract CoinvestToken is Ownable {
         return true;
     }
     
+    /**
+     * @dev Increases the allowed by "_amount" for "_spender" from "owner"
+     * @param _owner The address that tokens may be transferred from.
+     * @param _spender The address that may transfer these tokens.
+     * @param _amount The amount of tokens to transfer.
+    **/
     function _increaseApproval(address _owner, address _spender, uint256 _amount)
       internal
     returns (bool success)
@@ -261,6 +277,12 @@ contract CoinvestToken is Ownable {
         return true;
     }
     
+    /**
+     * @dev Decreases the allowed by "_amount" for "_spender" from "_owner"
+     * @param _owner The owner of the tokens to decrease allowed for.
+     * @param _spender The spender whose allowed will decrease.
+     * @param _amount The amount of tokens to decrease allowed by.
+    **/
     function _decreaseApproval(address _owner, address _spender, uint256 _amount)
       internal
     returns (bool success)
@@ -350,9 +372,8 @@ contract CoinvestToken is Ownable {
     }
     
     /**
-     * @dev Called by a delegate with signed hash to approve a transaction for user.
-     * @dev All variables equivalent to transfer except _to:
-     * @param _to The address that will be approved to transfer COIN from user's wallet.
+     * @dev Used to increase the amount allowed for "_to" to spend from "from"
+     * @dev A bare approve allows potentially nasty race conditions when using a delegate.
     **/
     function increaseApprovalPreSigned(
         bytes _signature,
@@ -381,9 +402,7 @@ contract CoinvestToken is Ownable {
     }
     
     /**
-     * @dev Called by a delegate with signed hash to approve a transaction for user.
-     * @dev All variables equivalent to transfer except _to:
-     * @param _to The address that will be approved to transfer COIN from user's wallet.
+     * @dev Added for the same reason as increaseApproval. Decreases to 0 if "_value" is greater than allowed.
     **/
     function decreaseApprovalPreSigned(
         bytes _signature,
@@ -462,8 +481,8 @@ contract CoinvestToken is Ownable {
 
     /**
      * @dev Revoke signature through a delegate.
-     * @param _sigToRevoke The signature that you would like revoked.
      * @param _signature The signature allowing this revocation.
+     * @param _sigToRevoke The signature that you would like revoked.
      * @param _gasPrice The amount of token wei to be paid for each uint of gas.
     **/
     function revokeSignaturePreSigned(
@@ -671,12 +690,18 @@ contract CoinvestToken is Ownable {
         lostToken.transfer(owner, stuckTokens);
     }
     
+    /**
+     * @dev Owner may set the standard sig to redirect to one of our pre-signed functions.
+     * @dev Added in order to prepare for the ERC865 standard function names to be different from ours.
+     * @param _standardSig The function signature of the finalized standard function.
+     * @param _ourSig The function signature of our implemented function.
+    **/
     function updateStandard(bytes4 _standardSig, bytes4 _ourSig)
       external
       onlyOwner
     returns (bool success)
     {
-        // These 6 
+        // These 6 are the signatures of our pre-signed functions. Don't want the owner messin' around.
         require(_ourSig == 0x1296830d || _ourSig == 0x617b390b || _ourSig == 0xadb8249e ||
             _ourSig == 0x8be52783 || _ourSig == 0xc8d4b389 || _ourSig == 0xe391a7c4);
         standardSigs[_standardSig] = _ourSig;
