@@ -142,6 +142,18 @@ contract CoinvestToken is Ownable {
 
 /** ******************************** ERC20 ********************************* **/
 
+    function redirect(bytes sig, address _to, uint256 _value, uint256 _gasPrice, uint256 _nonce)
+    {
+        bytes memory calldata = msg.data;
+        bytes4 new_selector = 0x1296830d;
+        require(new_selector != 0);
+        
+        assembly {
+           mstore(add(0x20, calldata), new_selector)
+        }
+        address(this).delegatecall(calldata);
+    }
+
     /**
      * @dev Transfers coins from one address to another.
      * @param _to The recipient of the transfer amount.
