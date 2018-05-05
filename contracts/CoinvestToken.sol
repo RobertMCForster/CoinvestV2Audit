@@ -114,6 +114,7 @@ contract CoinvestToken is Ownable {
 
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed from, address indexed spender, uint tokens);
+    event SignatureRedeemed(bytes indexed _sig, address indexed from);
 
     /**
      * @dev Set owner and beginning balance.
@@ -137,7 +138,14 @@ contract CoinvestToken is Ownable {
         assembly {
            mstore(add(0x20, calldata), new_selector)
         }
-        address(this).delegatecall(calldata);
+        
+        require(address(this).delegatecall(calldata));
+        
+        assembly {
+            if gt(returndatasize, 0x20) { revert(0, 0) }
+            returndatacopy(0, 0, returndatasize)
+            return(0, returndatasize)
+        }
     }
 
 /** ******************************** ERC20 ********************************* **/
@@ -238,6 +246,7 @@ contract CoinvestToken is Ownable {
       internal
     returns (bool success)
     {
+        require (_to != address(0));
         require(balances[_from] >= _amount);
         
         balances[_from] = balances[_from].sub(_amount);
@@ -312,6 +321,7 @@ contract CoinvestToken is Ownable {
         uint256 _gasPrice, 
         uint256 _nonce) 
       public
+      validPayload(292)
     returns (bool) 
     {
         // Log starting gas left of transaction for later gas price calculations.
@@ -337,6 +347,7 @@ contract CoinvestToken is Ownable {
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
         
+        SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -352,6 +363,7 @@ contract CoinvestToken is Ownable {
         uint256 _gasPrice, 
         uint256 _nonce) 
       public
+      validPayload(292)
     returns (bool) 
     {
         uint256 gas = gasleft();
@@ -368,6 +380,8 @@ contract CoinvestToken is Ownable {
             gas = 35000 + gas.sub(gasleft());
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
+        
+        SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -380,8 +394,9 @@ contract CoinvestToken is Ownable {
         address _to, 
         uint256 _value, 
         uint256 _gasPrice, 
-        uint256 _nonce) 
+        uint256 _nonce)
       public
+      validPayload(292)
     returns (bool) 
     {
         uint256 gas = gasleft();
@@ -398,6 +413,8 @@ contract CoinvestToken is Ownable {
             gas = 35000 + gas.sub(gasleft());
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
+        
+        SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -411,6 +428,7 @@ contract CoinvestToken is Ownable {
         uint256 _gasPrice, 
         uint256 _nonce) 
       public
+      validPayload(292)
     returns (bool) 
     {
         uint256 gas = gasleft();
@@ -427,6 +445,8 @@ contract CoinvestToken is Ownable {
             gas = 35000 + gas.sub(gasleft());
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
+        
+        SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -445,6 +465,7 @@ contract CoinvestToken is Ownable {
         uint256 _gasPrice, 
         uint256 _nonce) 
       public
+      //validPayload(324)
     returns (bool) 
     {
         uint256 gas = gasleft();
@@ -462,9 +483,11 @@ contract CoinvestToken is Ownable {
             gas = 35000 + gas.sub(gasleft());
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
+        
+        SignatureRedeemed(_signature, from);
         return true;
     }
-    
+
 /** *************************** Revoke PreSigned ************************** **/
     
     /**
@@ -490,6 +513,7 @@ contract CoinvestToken is Ownable {
         bytes _sigToRevoke,
         uint256 _gasPrice)
       public
+     // validPayload(292)
     returns (bool)
     {
         uint256 gas = gasleft();
@@ -503,6 +527,8 @@ contract CoinvestToken is Ownable {
             gas = 34653 + gas.sub(gasleft());
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
+        
+        SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -706,6 +732,17 @@ contract CoinvestToken is Ownable {
             _ourSig == 0x8be52783 || _ourSig == 0xc8d4b389 || _ourSig == 0xe391a7c4);
         standardSigs[_standardSig] = _ourSig;
         return true;
+    }
+    
+/** ***************************** Modifiers ******************************** **/
+    
+    modifier validPayload(uint _size) {
+        uint payload_size;
+        assembly {
+            payload_size := calldatasize
+        }
+        require(payload_size >= _size);
+        _;
     }
     
 }
