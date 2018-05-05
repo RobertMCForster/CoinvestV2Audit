@@ -347,7 +347,7 @@ contract CoinvestToken is Ownable {
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
         
-        SignatureRedeemed(_signature, from);
+        emit SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -381,7 +381,7 @@ contract CoinvestToken is Ownable {
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
         
-        SignatureRedeemed(_signature, from);
+        emit SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -414,7 +414,7 @@ contract CoinvestToken is Ownable {
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
         
-        SignatureRedeemed(_signature, from);
+        emit SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -446,7 +446,7 @@ contract CoinvestToken is Ownable {
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
         
-        SignatureRedeemed(_signature, from);
+        emit SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -465,7 +465,7 @@ contract CoinvestToken is Ownable {
         uint256 _gasPrice, 
         uint256 _nonce) 
       public
-      //validPayload(324)
+      validPayload(388)
     returns (bool) 
     {
         uint256 gas = gasleft();
@@ -484,7 +484,7 @@ contract CoinvestToken is Ownable {
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
         
-        SignatureRedeemed(_signature, from);
+        emit SignatureRedeemed(_signature, from);
         return true;
     }
 
@@ -513,7 +513,7 @@ contract CoinvestToken is Ownable {
         bytes _sigToRevoke,
         uint256 _gasPrice)
       public
-     // validPayload(292)
+      validPayload(356)
     returns (bool)
     {
         uint256 gas = gasleft();
@@ -524,11 +524,11 @@ contract CoinvestToken is Ownable {
         invalidSignatures[from][_sigToRevoke] = true;
         
         if (_gasPrice > 0) {
-            gas = 34653 + gas.sub(gasleft());
+            gas = 35000 + gas.sub(gasleft());
             require(_transfer(from, msg.sender, _gasPrice.mul(gas)));
         }
         
-        SignatureRedeemed(_signature, from);
+        emit SignatureRedeemed(_signature, from);
         return true;
     }
     
@@ -539,12 +539,12 @@ contract CoinvestToken is Ownable {
     **/
     function getRevokeHash(bytes _sigToRevoke, uint256 _gasPrice)
       public
-      view
+      pure
     returns (bytes32 txHash)
     {
         return keccak256(revokeSignatureSig, _sigToRevoke, _gasPrice);
     }
-    
+
     /**
      * @dev Recover the address from a revocation signature.
      * @param _sigToRevoke The signature to be revoked.
@@ -553,7 +553,7 @@ contract CoinvestToken is Ownable {
     **/
     function recoverRevokeHash(bytes _signature, bytes _sigToRevoke, uint256 _gasPrice)
       public
-      view
+      pure
     returns (address from)
     {
         return ecrecoverFromSig(getSignHash(getRevokeHash(_sigToRevoke, _gasPrice)), _signature);
