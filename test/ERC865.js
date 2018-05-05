@@ -104,6 +104,12 @@ contract('Token', function ([_, wallet]) {
 
     })
 
+    it('should fail on send to 0x0', async function () {
+
+      await this.token.transfer(0, toEther(10000), {from: this.owner}).should.be.rejectedWith(EVMRevert);
+
+    })
+
   })
   
   
@@ -369,15 +375,33 @@ contract('Token', function ([_, wallet]) {
       let tx = await this.token.transferPreSigned(signature, this.accountTwo, 1, 0, 1, {from:this.accountThree})
       assert.isOk(tx)
 
+      let threeBalance = await this.token.balanceOf(this.accountThree)
+      threeBalance.should.be.bignumber.equal(0)
+
     })
 
     it('should fail on too many tokens', async function() {
 
       // Signing with account two (0 tokens)
-      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.owner, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.accountTwo, preSignedHash);
 
       await this.token.transferPreSigned(signature, this.owner, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
+    
+    })
+
+    it('should fail with not enough bytes', async function() {
+
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, toEther(100), 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+
+      let typesArray = ['bytes', 'address', 'uint256', 'uint256', 'uint256']
+      let parameters = [signature, this.accountTwo, toEther(100), 1, 1]
+      let preRaw = web3Abi.encodeParameters(typesArray, parameters);
+      let rawData = '0x1296830d' + preRaw.substring(2, 560)
+
+      // transferPreSigned input. From is owner, to this.accountTwo, 
+      expectThrow(this.token.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawData}))
     })
 
     it('should fail on repeat sig', async function() {
@@ -393,19 +417,21 @@ contract('Token', function ([_, wallet]) {
     it('should fail on wrong function sig', async function() {
 
       // Normal approve function sig in here
-      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.owner, 1, 0, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.accountTwo, 1, 0, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.transferPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
+    
     })
 
     it('should fail with data', async function() {
 
       // Normal transfer function sig, to address, value, extra data of '1', gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.owner, 1, 1, 1, 1)
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 1, 1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.transferPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
+    
     })
 
   })
@@ -457,6 +483,23 @@ contract('Token', function ([_, wallet]) {
       let tx = await this.token.approvePreSigned(signature, this.accountTwo, 1, 0, 1, {from:this.accountThree})
       assert.isOk(tx)
 
+      let threeBalance = await this.token.balanceOf(this.accountThree)
+      threeBalance.should.be.bignumber.equal(0)
+
+    })
+
+    it('should fail with not enough bytes', async function() {
+
+      let preSignedHash = await this.token.getPreSignedHash('0x095ea7b3', this.accountTwo, toEther(100), 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+
+      let typesArray = ['bytes', 'address', 'uint256', 'uint256', 'uint256']
+      let parameters = [signature, this.accountTwo, toEther(100), 1, 1]
+      let preRaw = web3Abi.encodeParameters(typesArray, parameters);
+      let rawData = '0x617b390b' + preRaw.substring(2, 560)
+
+      // transferPreSigned input. From is owner, to this.accountTwo, 
+      expectThrow(this.token.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawData}))
     })
 
     it('should fail on repeat sig', async function() {
@@ -535,7 +578,24 @@ contract('Token', function ([_, wallet]) {
 
       let tx = await this.token.increaseApprovalPreSigned(signature, this.accountTwo, 1, 0, 1, {from:this.accountThree})
       assert.isOk(tx)
+  
+      let threeBalance = await this.token.balanceOf(this.accountThree)
+      threeBalance.should.be.bignumber.equal(0)
 
+    })
+
+    it('should fail with not enough bytes', async function() {
+
+      let preSignedHash = await this.token.getPreSignedHash('0xd73dd623', this.accountTwo, toEther(100), 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+
+      let typesArray = ['bytes', 'address', 'uint256', 'uint256', 'uint256']
+      let parameters = [signature, this.accountTwo, toEther(100), 1, 1]
+      let preRaw = web3Abi.encodeParameters(typesArray, parameters);
+      let rawData = '0xadb8249e' + preRaw.substring(2, 560)
+
+      // transferPreSigned input. From is owner, to this.accountTwo, 
+      expectThrow(this.token.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawData}))
     })
 
     it('should fail on repeat sig', async function() {
@@ -623,6 +683,24 @@ contract('Token', function ([_, wallet]) {
       let tx = await this.token.decreaseApprovalPreSigned(signature, this.accountTwo, toEther(100), 0, 1, {from:this.accountThree})
       assert.isOk(tx)
 
+      let threeBalance = await this.token.balanceOf(this.accountThree)
+      threeBalance.should.be.bignumber.equal(0)
+
+    })
+
+    it('should fail with not enough bytes', async function() {
+
+      let preSignedHash = await this.token.getPreSignedHash('0x66188463', this.accountTwo, toEther(100), 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+
+      let typesArray = ['bytes', 'address', 'uint256', 'uint256', 'uint256']
+      let parameters = [signature, this.accountTwo, toEther(100), 1, 1]
+      let preRaw = web3Abi.encodeParameters(typesArray, parameters);
+      let rawData = '0x8be52783' + preRaw.substring(2, 560)
+
+      // transferPreSigned input. From is owner, to this.accountTwo, 
+      expectThrow(this.token.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawData}))
+    
     })
 
     it('should decrease to 0 on too many tokens', async function() {
@@ -692,7 +770,7 @@ contract('Token', function ([_, wallet]) {
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       // signature, to, value, gas price, nonce
-      await this.token.approveAndCallPreSigned(signature, this.testContract.address, toEther(100), 0, 1, 1, {from:this.accountThree})
+      let tx = await this.token.approveAndCallPreSigned(signature, this.testContract.address, toEther(100), 0, 1, 1, {from:this.accountThree})
 
       let testBalance = await this.token.balanceOf(this.testContract.address)
       let ownerBalance = await this.token.balanceOf(this.owner)
@@ -725,6 +803,34 @@ contract('Token', function ([_, wallet]) {
       let tx = await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 0, 0, 1, {from:this.accountThree})
       assert.isOk(tx)
 
+      let threeBalance = await this.token.balanceOf(this.accountThree)
+      threeBalance.should.be.bignumber.equal(0)
+
+    })
+
+    it('should succeed with data', async function() {
+
+      // Normal approveAndCall function sig, to address, value, extra data of '1', gas price, nonce
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 1, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+
+      let tx = await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 1, 1, 1, {from:this.accountThree})
+      assert.isOk(tx)
+
+    })
+
+    it('should fail with not enough bytes', async function() {
+
+      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+
+      let typesArray = ['bytes', 'address', 'uint256', 'bytes', 'uint256', 'uint256']
+      let parameters = [signature, this.testContract.address, 1, '0x00', 1, 1]
+      let preRaw = web3Abi.encodeParameters(typesArray, parameters);
+      let rawData = '0xc8d4b389' + preRaw.substring(2, 760)
+
+      expectThrow(this.token.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawData}))
+    
     })
 
     it('should fail on too many tokens', async function() {
@@ -753,17 +859,6 @@ contract('Token', function ([_, wallet]) {
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
       await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 0, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);
-    })
-
-    it('should succeed with data', async function() {
-
-      // Normal approveAndCall function sig, to address, value, extra data of '1', gas price, nonce
-      let preSignedHash = await this.token.getPreSignedHash('0xcae9ca51', this.testContract.address, 1, 1, 1, 1)
-      let signature = web3.eth.sign(this.owner, preSignedHash);
-
-      let tx = await this.token.approveAndCallPreSigned(signature, this.testContract.address, 1, 1, 1, 1, {from:this.accountThree})
-      assert.isOk(tx)
-
     })
 
     it('should fail on call to wallet address', async function() {
@@ -860,6 +955,23 @@ contract('Token', function ([_, wallet]) {
 
     })
 
+    it('should fail with not enough bytes', async function() {
+
+      // Arbitrary transfer preSigned
+      let signature = '0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301'
+
+      let revokeHash = await this.token.getRevokeHash(signature, 0)
+      let revokeSig = web3.eth.sign(this.owner, revokeHash);
+
+      let typesArray = ['bytes', 'bytes', 'uint256']
+      let parameters = [revokeSig, signature, 0]
+      let preRaw = web3Abi.encodeParameters(typesArray, parameters);
+      let rawData = '0xe391a7c4' + preRaw.substring(2, 700)
+
+      expectThrow(this.token.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawData}))
+    
+    })
+
   })
 
 
@@ -892,6 +1004,24 @@ contract('Token', function ([_, wallet]) {
       ownerBalance.should.be.bignumber.lessThan(toEther(107142857))
       twoBalance.should.be.bignumber.equal(toEther(100))
       threeBalance.should.be.bignumber.greaterThan(0)
+
+    })
+
+    it('should redirect to our preSigned function from arbitrary sig', async function () {
+
+      // arbitrary function sig => transferPreSigned sig
+      await this.token.updateStandard('0xdeadbeef', '0x1296830d', {from:this.owner})
+
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, toEther(100), 0, 1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+
+      let typesArray = ['bytes', 'address', 'uint256', 'uint256', 'uint256']
+      let parameters = [signature, this.accountTwo, toEther(100), 1, 1]
+      let preRaw = web3Abi.encodeParameters(typesArray, parameters);
+      let rawData = '0xdeadbeef' + preRaw.substring(2)
+
+      // transferPreSigned input. From is owner, to this.accountTwo, 
+      let tx = web3.eth.sendTransaction({from:this.accountThree,to:this.token.address,gas:1000000,data:rawData})
 
     })
 
@@ -941,6 +1071,27 @@ contract('Token', function ([_, wallet]) {
 
       let allowance = await this.token.allowance(this.owner, this.accountTwo)
       allowance.should.be.bignumber.equal(toEther(500))
+
+    })
+
+    it('should return the correct symbol', async function() {
+
+      let symbol = await this.token.symbol()
+      symbol.should.be.equal("COIN")
+
+    })
+
+    it('should return the correct decimals', async function() {
+
+      let decimals = await this.token.decimals()
+      decimals.should.be.bignumber.equal(18)
+
+    })
+
+    it('should return the correct name', async function() {
+
+      let name = await this.token.name()
+      name.should.be.equal("Coinvest COIN V2 Token")
 
     })
 
