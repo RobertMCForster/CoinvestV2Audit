@@ -114,8 +114,8 @@ contract CoinvestToken is Ownable {
 
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed from, address indexed spender, uint tokens);
-    event SignatureRedeemed(bytes indexed _sig, address indexed from);
-
+    event SignatureRedeemed(bytes _sig, address indexed from);
+    
     /**
      * @dev Set owner and beginning balance.
     **/
@@ -499,9 +499,11 @@ contract CoinvestToken is Ownable {
     returns (bool)
     {
         invalidSignatures[msg.sender][_sigToRevoke] = true;
+        
+        emit SignatureRedeemed(_sigToRevoke, msg.sender);
         return true;
     }
-
+    
     /**
      * @dev Revoke signature through a delegate.
      * @param _signature The signature allowing this revocation.
