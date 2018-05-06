@@ -6,6 +6,7 @@ import EVMRevert from './helpers/EVMRevert'
 import EVMThrow from './helpers/EVMThrow'
 import expectThrow from './helpers/expectThrow'; 
 import assertRevert from './helpers/assertRevert';
+import expectEvent from './helpers/expectEvent'; 
 
 // web3Abi required to test overloaded transfer functions
 const web3Abi = require('web3-eth-abi');
@@ -98,6 +99,13 @@ contract('Token', function ([_, wallet]) {
   
     })
 
+    it('should emit Transfer event', async function () {
+
+      let tx = await this.token.transfer(this.accountTwo, toEther(107142857), {from: this.owner})
+      tx.logs[0].event.should.be.equal("Transfer")
+  
+    })
+
     it('should fail when address sends more tokens than it has', async function () {
 
       await this.token.transfer(this.owner, toEther(10000), {from: this.accountTwo}).should.be.rejectedWith(EVMRevert);
@@ -127,6 +135,13 @@ contract('Token', function ([_, wallet]) {
 
     })
 
+    it('should emit Approve event', async function () {
+
+      let tx = await this.token.approve(this.accountTwo, toEther(107142857), {from: this.owner})
+      tx.logs[0].event.should.be.equal("Approval")
+  
+    })
+
     it('should increaseApproval by 500 tokens to be sent by accountTwo', async function() {
     
       await this.token.increaseApproval(this.accountTwo, toEther(500), {from: this.owner})
@@ -134,6 +149,13 @@ contract('Token', function ([_, wallet]) {
       let allowance = await this.token.allowance(this.owner, this.accountTwo)
       allowance.should.be.bignumber.equal(toEther(500))
 
+    })
+
+    it('should emit Approve event', async function () {
+
+      let tx = await this.token.increaseApproval(this.accountTwo, toEther(107142857), {from: this.owner})
+      tx.logs[0].event.should.be.equal("Approval")
+  
     })
 
     it('should decreaseApproval by 500 tokens to be sent by accountTwo', async function() {
@@ -156,6 +178,15 @@ contract('Token', function ([_, wallet]) {
       let allowance = await this.token.allowance(this.owner, this.accountTwo)
       allowance.should.be.bignumber.equal(0)
 
+    })
+
+    it('should emit Approve event', async function () {
+
+      await this.token.approve(this.accountTwo, toEther(500), {from:this.owner})
+
+      let tx = await this.token.decreaseApproval(this.accountTwo, toEther(107142857), {from: this.owner})
+      tx.logs[0].event.should.be.equal("Approval")
+  
     })
 
   })
@@ -198,6 +229,15 @@ contract('Token', function ([_, wallet]) {
 
 			newReceiverBalance.should.be.bignumber.equal(toEther(107142857))
 			newSenderBalance.should.be.bignumber.equal(0)
+
+    })
+
+    it('should emit Transfer event', async function () {
+
+      await this.token.approve(this.accountTwo, toEther(100), {from:this.owner})
+
+      let tx = await this.token.transferFrom(this.owner, this.accountTwo, toEther(100), {from: this.accountTwo})
+      tx.logs[0].event.should.be.equal("Transfer")
 
     })
 
@@ -909,7 +949,7 @@ contract('Token', function ([_, wallet]) {
       assert.isOk(tx)
 
       // Check delegate balance
-      let threeBalance = await this.token.balanceOf(this.accountThree)
+      //let threeBalance = await this.token.balanceOf(this.accountThree)
 
       // Make sure signature is revoked
       await this.token.transferPreSigned(signature, this.accountTwo, 1, 1, 1, {from:this.accountThree}).should.be.rejectedWith(EVMRevert);     
