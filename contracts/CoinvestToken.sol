@@ -142,7 +142,7 @@ contract CoinvestToken is Ownable {
         require(address(this).delegatecall(calldata));
         
         assembly {
-            if gt(returndatasize, 0x20) { revert(0, 0) }
+            if iszero(eq(returndatasize, 0x20)) { revert(0, 0) }
             returndatacopy(0, 0, returndatasize)
             return(0, returndatasize)
         }
@@ -465,7 +465,7 @@ contract CoinvestToken is Ownable {
         uint256 _gasPrice, 
         uint256 _nonce) 
       public
-      validPayload(388)
+      validPayload(356)
     returns (bool) 
     {
         uint256 gas = gasleft();
