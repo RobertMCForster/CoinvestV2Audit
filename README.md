@@ -1,6 +1,8 @@
-<h1>Coinvest V3 Token and Coinvest CASH Token</h1>
+Sorry for the mess...
+<h1>Coinvest V3 Token, Coinvest CASH Token, and Investment</h1>
 CoinvestToken.sol => V3truffle.js</br>
 CashToken.sol => CashTruffle.js</br>
+Investment.sol, Bank.sol, and UserData.sol => investment.js</br>
 (Old Coinvest Token is CoinvestTokenV2.sol => ERC865.js)
 
 <h2>Changes made from Coinvest V2:</h2>
