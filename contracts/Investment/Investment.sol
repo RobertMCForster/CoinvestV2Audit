@@ -7,14 +7,13 @@ import './Bank.sol';
 import './ERC20Interface.sol';
 import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
 
-
 /**
  * @dev This contract accepts COIN deposit with a list of every crypto in desired portfolio
  * @dev (and the % of each) stores this information, then disburses withdrawals when requested
  * @dev in COIN depending on the new price of the coins in the portfolio
 **/
 
-contract InvestmentTest is Ownable {//, usingOraclize { 
+contract InvestmentTest is Ownable, usingOraclize { 
 
     using SafeMathLib for uint256;
     using strings for *;
@@ -71,7 +70,7 @@ contract InvestmentTest is Ownable {//, usingOraclize {
         bank = Bank(_bank);
         userData = UserData(_userData);
 
-        //oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
+        oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
         
         addCrypto(1, "BTC,", 11, false);
         addCrypto(2, "ETH,", 12, false);
