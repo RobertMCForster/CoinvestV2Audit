@@ -5,7 +5,7 @@ import './Strings.sol';
 import './UserData.sol';
 import './Bank.sol';
 import './ERC20Interface.sol';
-import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
+//import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
 
 
 /**
@@ -97,7 +97,7 @@ contract InvestmentTest is Ownable {//, usingOraclize {
         addCrypto(22, "CASH,", 21, true);
 
         customGasPrice = 20000000000;
-        oraclize_setCustomGasPrice(customGasPrice);
+        //oraclize_setCustomGasPrice(customGasPrice);
     }
   
     function()
@@ -311,15 +311,16 @@ contract InvestmentTest is Ownable {//, usingOraclize {
       internal
     returns (bool success)
     {
-        if (oraclize_getPrice("URL") > this.balance) {
-            emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
-        } else {
-            emit newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
+        //if (oraclize_getPrice("URL") > this.balance) {
+        //    emit newOraclizeQuery("Oraclize query was NOT sent, please add some ETH to cover for the query fee");
+        //} else {
+        //    emit newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
             string memory fullUrl = craftUrl(_cryptos, _isCoin);
             
-            bytes32 queryId = oraclize_query("URL", fullUrl, 150000 + 50000 * _cryptos.length);
+        //    bytes32 queryId = oraclize_query("URL", fullUrl, 150000 + 50000 * _cryptos.length);
+            bytes32 queryId = 0x0000000000000000000000000000000000000000000000000000000000000001;
             trades[queryId] = TradeInfo(bitConv(_cryptos, _amounts), _beneficiary, _buy, _isCoin);
-        }
+        //}
         return true;
     }
     
@@ -329,7 +330,7 @@ contract InvestmentTest is Ownable {//, usingOraclize {
     function __callback(bytes32 myid, string result, bytes proof)
       public
     {
-        if (msg.sender != oraclize_cbAddress()) throw;
+        //if (msg.sender != oraclize_cbAddress()) throw;
     
         TradeInfo memory tradeInfo = trades[myid];
         var (a,b) = bitRec(tradeInfo.idsAndAmts);
@@ -488,7 +489,7 @@ contract InvestmentTest is Ownable {//, usingOraclize {
     returns (bool success)
     {
         customGasPrice = _newGasPrice;
-        oraclize_setCustomGasPrice(_newGasPrice);
+        //oraclize_setCustomGasPrice(_newGasPrice);
         return true;
     }
     
@@ -510,6 +511,32 @@ contract InvestmentTest is Ownable {//, usingOraclize {
             uint256 stuckTokens = lostToken.balanceOf(address(this));
             lostToken.transfer(coinvest, stuckTokens);
         }
+    }
+
+ /** ************************** Temp ************************************ **/
+    
+    // parseInt
+    function parseInt(string _a) internal pure returns (uint) {
+        return parseInt(_a, 0);
+    }
+
+    // parseInt(parseFloat*10^_b)
+    function parseInt(string _a, uint _b) internal pure returns (uint) {
+        bytes memory bresult = bytes(_a);
+        uint mint = 0;
+        bool decimals = false;
+        for (uint i=0; i<bresult.length; i++){
+            if ((bresult[i] >= 48)&&(bresult[i] <= 57)){
+                if (decimals){
+                   if (_b == 0) break;
+                    else _b--;
+                }
+                mint *= 10;
+                mint += uint(bresult[i]) - 48;
+            } else if (bresult[i] == 46) decimals = true;
+        }
+        if (_b > 0) mint *= 10**_b;
+        return mint;
     }
     
 }
