@@ -16,3 +16,10 @@ Investment.sol, Bank.sol, and UserData.sol => investment.js</br>
 8. ValidPayload was removed for the same reason.</br>
 </br>
 CASH is simply V3 copy-pasted but with a mint function and burn function  and events added for the owner (and of course the name/symbol is changed). It’s essentially our version of tether but using gold instead of USD. The truffles are also identical besides added mint and burn function testing for CASH. Total supply is the same as COIN for testing but will be changed (or just burned) to whatever is needed upon launch.
+<h2>Investment Contracts:</h2>
+Requirements:</br>
+1. Must modify UserData contract on a buy or sell by Oraclizing the current crypto price from cryptocompare.</br>
+2. Must be able to purchase assets with either COIN or CASH.</br>
+3. Must be able to be updated—we’re using modularization for this by creating the permanent contracts as simple as possible.</br>
+4. Must be able to exchange COIN for CASH when either is bought individually.</br>
+5. Must allow inverse purchases of cryptos. This is essentially the same as shorting but simply acts as another crypto that is always equal to 1/regular crypto (e.g. IBTC = 1/BTC).</br>
