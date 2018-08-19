@@ -13,7 +13,7 @@ import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
  * @dev in COIN depending on the new price of the coins in the portfolio
 **/
 
-contract InvestmentTest is Ownable, usingOraclize { 
+contract Investment is Ownable, usingOraclize { 
 
     using SafeMathLib for uint256;
     using strings for *;
