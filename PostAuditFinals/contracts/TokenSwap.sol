@@ -6,7 +6,7 @@ pragma solidity ^0.4.24; import './ERC20Interface.sol'; contract TokenSwap {
     
     /**
     **/
-    constructor(address _tokenV1, address _tokenV2, address _tokenV3) {
+    constructor(address _tokenV1, address _tokenV2, address _tokenV3) public {
         tokenV1 = ERC20Interface(_tokenV1);
         tokenV2 = ERC20Interface(_tokenV2);
         tokenV3 = ERC20Interface(_tokenV3);
