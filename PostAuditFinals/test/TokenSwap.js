@@ -59,7 +59,7 @@ const getBalance = (account, at) =>
   
     describe('V2 -> V3 Swap', function () {
 
-        it('should exchange correct amount', async function () {
+        it('should exchange full amount and decrement accordingly', async function () {
             let initialBalance = await this.tokenV2.balanceOf(this.owner)
             await this.tokenV2.approveAndCall(this.tokenSwap.address, initialBalance, '')
 
@@ -71,6 +71,13 @@ const getBalance = (account, at) =>
 
             let newSwapBal = await this.tokenV3.balanceOf(this.tokenSwap.address)
             newSwapBal.should.be.bignumber.equal(0)
+        })
+
+        it('should exchange 10 token wei', async function () {
+          await this.tokenV2.approveAndCall(this.tokenSwap.address, 10, '')
+
+          let newTokenBal = await this.tokenV3.balanceOf(this.owner)
+          newTokenBal.should.be.bignumber.equal(10)
         })
 
         it('should fail if tokenV2 is not caller', async function () {
@@ -85,7 +92,7 @@ const getBalance = (account, at) =>
 
     describe('V1 -> V3 Swap', function () {
 
-      it('should exchange correct amount', async function () {
+      it('should exchange full amount and decrement accordingly', async function () {
           let initialBalance = await this.tokenV1.balanceOf(this.owner)
           await this.tokenV1.transfer(this.tokenSwap.address, initialBalance)
 
@@ -99,7 +106,14 @@ const getBalance = (account, at) =>
           newSwapBal.should.be.bignumber.equal(0)
       })
 
-      it('should fail if token is not caller', async function () {
+      it('should exchange 10 token wei', async function () {
+        await this.tokenV1.transfer(this.tokenSwap.address, 10)
+
+        let newTokenBal = await this.tokenV3.balanceOf(this.owner)
+        newTokenBal.should.be.bignumber.equal(10)
+      })
+
+      it('should fail if token V1 is not caller', async function () {
           await this.tokenSwap.tokenFallback(this.owner,100,'').should.be.rejectedWith(EVMRevert)
       })
 
