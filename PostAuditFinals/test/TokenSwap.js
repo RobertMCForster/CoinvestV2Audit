@@ -41,7 +41,8 @@ const getBalance = (account, at) =>
 
     beforeEach(async function() {
   
-      this.owner             = web3.eth.accounts[0];
+      this.owner            = web3.eth.accounts[0];
+      this.accountTwo       = web3.eth.accounts[1];
   
       this.tokenV1          = await Token223.new(0,{from:this.owner});
       this.tokenV2          = await Token.new({from:this.owner});
@@ -119,6 +120,34 @@ const getBalance = (account, at) =>
 
       it('should fail if amount is 0', async function () {
         await this.tokenV1.transfer(this.tokenSwap.address, 0).should.be.rejectedWith(EVMRevert)
+      })
+
+    })
+
+    describe('tokenEscape', function () {
+
+      it('should be able to transfer any ERC20 off this contract to owner', async function () {
+        await this.tokenV2.transfer(this.tokenSwap.address, 1000, {from:this.owner})
+        let tokenBalance = await this.tokenV2.balanceOf(this.tokenSwap.address)
+        tokenBalance.should.be.bignumber.equal(1000)
+  
+        await this.tokenSwap.tokenEscape(this.tokenV2.address, {from:this.owner})
+        let tokenBalanceTwo = await this.tokenV2.balanceOf(this.tokenSwap.address)
+        tokenBalanceTwo.should.be.bignumber.equal(0)
+      })
+
+      it('should not be able to transfer tokenV1 or tokenV3 off contract', async function () {
+        await this.tokenV1.transfer(this.tokenSwap.address, 1000, {from:this.owner})
+        let tokenBalance = await this.tokenV1.balanceOf(this.tokenSwap.address)
+        tokenBalance.should.be.bignumber.equal(1000)
+        await this.tokenSwap.tokenEscape(this.tokenV1.address, {from:this.owner}).should.be.rejectedWith(EVMRevert)
+
+        await this.tokenSwap.tokenEscape(this.tokenV3.address, {from:this.owner}).should.be.rejectedWith(EVMRevert)
+      })
+
+      it('should fail on non-owner call', async function () {
+        await this.tokenV2.transfer(this.tokenSwap.address, 1000, {from:this.owner})
+        await this.tokenSwap.tokenEscape(this.tokenV2.address, {from:this.accountTwo}).should.be.rejectedWith(EVMRevert)
       })
 
     })
