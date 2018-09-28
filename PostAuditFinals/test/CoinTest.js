@@ -74,6 +74,17 @@ contract('Token', function ([_, wallet]) {
 
 describe('new checks', function () {
 
+    it('should increase nonce on non-presigned revokeHash', async function() {
+
+      let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 0,  1, 1)
+      let signature = web3.eth.sign(this.owner, preSignedHash);
+      await this.token.revokeHash(preSignedHash)
+
+      let nonce = await this.token.getNonce(this.owner)
+      nonce.should.be.bignumber.equal(1)
+
+    })
+
     it('should not be vulnerable to the .call .delegatecall vulnerability', async function () {
       // Give the token2 contract an initial balance.
       await this.token2.transfer(this.token2.address, 1000, {from:this.owner})
@@ -954,7 +965,6 @@ describe('new checks', function () {
     it('should make invalid signature and fail on attempt to send', async function() {
 
       // Arbitrary transfer preSigned
-      // 0xf93425ee98d803f3a2e8a647ac655d02db00b2d42f1f3a7a79cb349309b6affd220f7f15a44d5798b255f8f45563f1bb10a7485608291eda8445b0cab55fd73301
       let preSignedHash = await this.token.getPreSignedHash('0xa9059cbb', this.accountTwo, 1, 0,  1, 1)
       let signature = web3.eth.sign(this.owner, preSignedHash);
 
