@@ -419,6 +419,7 @@ contract CashToken is Ownable {
     returns (bool)
     {
         invalidHashes[msg.sender][_hashToRevoke] = true;
+        nonces[msg.sender]++;
         return true;
     }
     
